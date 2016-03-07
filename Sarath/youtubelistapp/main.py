@@ -18,6 +18,7 @@ JINJA_ENVIRONMENT = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.di
 DEVELOPER_KEY = "AIzaSyCq_AkZGuFIIgG97ibj7WZNA5F5L4VqEqI"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
+QUERY = "Danga Maari"
 
 
 class MainHandler(webapp2.RequestHandler):
@@ -26,27 +27,19 @@ class MainHandler(webapp2.RequestHandler):
             self.response.write("""You must set up a project and get an API key to run this project.  Please visit <landing page> to do so.""")
         else:
             youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=DEVELOPER_KEY)
-            search_response = youtube.search().list(q="Danga Maari", part="id,snippet", maxResults=10).execute()
+            search_response = youtube.search().list(q= QUERY, part="id,snippet", maxResults=10).execute()
 
             videos = []
-            channels = []
-            playlists = []
 
             for search_result in search_response.get("items", []):
                 if search_result["id"]["kind"] == "youtube#video":
-                    videos.append("%s (%s)" % (search_result["snippet"]["title"], search_result["id"]["videoId"]))
-                elif search_result["id"]["kind"] == "youtube#channel":
-                    channels.append("%s (%s)" % (search_result["snippet"]["title"], search_result["id"]["channelId"]))
-                elif search_result["id"]["kind"] == "youtube#playlist":
-                    playlists.append("%s (%s)" % (search_result["snippet"]["title"], search_result["id"]["playlistId"]))
+                    videos.append([search_result["id"]["videoId"],search_result["snippet"]["title"]])
 
             template_values = {
-                'videos': videos,
-                'channels': channels,
-                'playlists': playlists
+                'videos': videos
             }
 
-            self.response.headers['Content-type'] = 'text/plain'
+            self.response.headers['Content-type'] = 'text/html'
             template = JINJA_ENVIRONMENT.get_template('index.html')
             self.response.write(template.render(template_values))
 
