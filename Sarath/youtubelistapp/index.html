@@ -4,8 +4,10 @@
   <body>
     <p>Videos: </p>
     {% for video in videos %}
-    	<a href="https://www.youtube.com/watch?v={{ video[0] }}">{{ video[1] }}</a><br/>
+    	<a href="https://www.youtube.com/embed/{{ video[0] }}?autoplay=1" target="yplayer">{{ video[1] }}</a><br/>
     {% endfor %}
+    <br/><br/>
+    <iframe name="yplayer" type="text/html" width="640" height="480" src="https://www.youtube.com/embed/{{ videos[0][0] }}?autoplay=1" frameborder="0" />
   </body>
 </html>
 {% endautoescape %}
