@@ -20,8 +20,65 @@ YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 QUERY = "Danga Maari"
 
-
 class MainHandler(webapp2.RequestHandler):
+    # Create a liveBroadcast resource and set its title, scheduled start time,
+    # scheduled end time, and privacy status.
+    def insert_broadcast(youtube):
+        insert_broadcast_response = youtube.liveBroadcasts().insert(
+            part="snippet,status",
+            body=dict(
+                snippet=dict(
+                    title="New Broadcast",
+                    scheduledStartTime='2016-03-24T00:00:00.000Z',
+                    scheduledEndTime='2016-03-25T00:00:00.000Z'
+                ),
+                status=dict(
+                    privacyStatus="private"
+                )
+            )
+        ).execute()
+
+        snippet = insert_broadcast_response["snippet"]
+
+        print "Broadcast '%s' with title '%s' was published at '%s'." % (
+            insert_broadcast_response["id"], snippet["title"], snippet["publishedAt"])
+        return insert_broadcast_response["id"]
+
+    # Create a liveStream resource and set its title, format, and ingestion type.
+    # This resource describes the content that you are transmitting to YouTube.
+    def insert_stream(youtube):
+        insert_stream_response = youtube.liveStreams().insert(
+            part="snippet,cdn",
+            body=dict(
+                snippet=dict(
+                    title="New Stream"
+                ),
+                cdn=dict(
+                    format="1080p",
+                    ingestionType="rtmp"
+                )
+            )
+        ).execute()
+
+        snippet = insert_stream_response["snippet"]
+
+        print "Stream '%s' with title '%s' was inserted." % (
+            insert_stream_response["id"], snippet["title"])
+        return insert_stream_response["id"]
+
+    # Bind the broadcast to the video stream. By doing so, you link the video that
+    # you will transmit to YouTube to the broadcast that the video is for.
+    def bind_broadcast(youtube, broadcast_id, stream_id):
+        bind_broadcast_response = youtube.liveBroadcasts().bind(
+            part="id,contentDetails",
+            id=broadcast_id,
+            streamId=stream_id
+        ).execute()
+
+        print "Broadcast '%s' was bound to stream '%s'." % (
+            bind_broadcast_response["id"],
+            bind_broadcast_response["contentDetails"]["boundStreamId"])
+
     def get(self):
         if DEVELOPER_KEY == "REPLACE_ME":
             self.response.write("""You must set up a project and get an API key to run this project.  Please visit <landing page> to do so.""")
@@ -34,6 +91,10 @@ class MainHandler(webapp2.RequestHandler):
             for search_result in search_response.get("items", []):
                 if search_result["id"]["kind"] == "youtube#video":
                     videos.append([search_result["id"]["videoId"],search_result["snippet"]["title"]])
+
+            # broadcast_id = self.insert_broadcast(youtube, args)
+            # stream_id = self.insert_stream(youtube, args)
+            # self.bind_broadcast(youtube, broadcast_id, stream_id)
 
             template_values = {
                 'videos': videos
